@@ -2,18 +2,29 @@ package main
 
 import (
 	"net/http"
+	"sync/atomic"
 )
 
-func main() {
-	mux := http.NewServeMux()
-	mux.Handle("/app", http.StripPrefix("/app/", http.FileServer(http.Dir("./app"))))
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
+type apiConfig struct {
+	fileServerHits atomic.Int32
+}
 
-	server := http.Server{Handler: mux, Addr: ":8080"}
+func main() {
+	filePathRoot := "."
+	port := "8080"
+	apiConfig := &apiConfig{}
+
+	mux := http.NewServeMux()
+	mux.Handle("/app/", http.StripPrefix("/app/", apiConfig.middlewareMetricsInc(http.FileServer(http.Dir(filePathRoot)))))
+	mux.HandleFunc("GET /admin/metrics", apiConfig.handlerMetrics)
+	mux.HandleFunc("POST /admin/reset", apiConfig.resetMetrics)
+	mux.HandleFunc("GET /api/healthz", handleReadiness)
+
+	server := &http.Server{
+		Handler: mux, 
+		Addr: ":" + port,
+	}
+
 	server.ListenAndServe()
 
 }
