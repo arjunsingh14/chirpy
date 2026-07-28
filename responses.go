@@ -6,6 +6,10 @@ import(
 	"encoding/json"
 )
 
+type respErr struct {
+	Error string
+}
+
 func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	dat, err := json.Marshal(payload)
 	if err != nil {

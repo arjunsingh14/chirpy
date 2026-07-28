@@ -5,7 +5,11 @@ import(
 )
 
 
-func (cfg *apiConfig) resetMetrics(w http.ResponseWriter, req *http.Request) {
-		cfg.fileServerHits.Store(0)
+func (cfg *apiConfig) resetMetrics(w http.ResponseWriter, r *http.Request) {
+		if cfg.platform != "dev" {
+			respondWithError(w, 403, "FORBIDDEN")
+			return
+		}
+		cfg.db.ResetUsers(r.Context())
 		w.WriteHeader(http.StatusOK)
 }

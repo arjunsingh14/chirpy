@@ -14,12 +14,14 @@ import (
 
 type apiConfig struct {
 	fileServerHits atomic.Int32
-	queries *database.Queries
+	db *database.Queries
+	platform string
 }
 
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Couldn't connect to datbase: %s", err)
@@ -28,7 +30,7 @@ func main() {
 
 	filePathRoot := "."
 	port := "8080"
-	apiConfig := &apiConfig{queries: dbQueries}
+	apiConfig := &apiConfig{db: dbQueries, platform: platform}
 
 	mux := http.NewServeMux()
 	mux.Handle("/app/", http.StripPrefix("/app/", apiConfig.middlewareMetricsInc(http.FileServer(http.Dir(filePathRoot)))))
@@ -37,7 +39,8 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiConfig.resetMetrics)
 
 	mux.HandleFunc("GET /api/healthz", handleReadiness)
-	mux.HandleFunc("POST /api/validate_chirp", handleValidateChirp)
+	mux.HandleFunc("POST /api/chirps", apiConfig.handleCreateChirp)
+	mux.HandleFunc("POST /api/users", apiConfig.handleCreateUser)
 
 
 	server := &http.Server{
