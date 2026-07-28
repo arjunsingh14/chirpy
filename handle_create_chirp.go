@@ -6,21 +6,11 @@ import (
 	"strings"
 	"github.com/arjunsingh14/chirpy/internal/database"
 	"github.com/google/uuid"
-	"time"
 )
 
 type chirpParams struct {
 	Body	string		`json:"body"`
 	UserId	uuid.UUID	`json:"user_id"`
-}
-
-type chirp struct {
-	ID			uuid.UUID `json:"id"`
-	User_id		uuid.UUID `json:"user_id"`
-	CreatedAt	time.Time `json:"created_at"`
-	UpdatedAt	time.Time `json:"updated_at"`
-	Email		string    `json:"email"`
-	Body		string    `json:"body"`
 }
 
 func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) {
@@ -44,16 +34,6 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) 
 	} 
 
 	respondWithJson(w, 201, buildChirp(chirp))
-}
-
-func buildChirp(c database.Chirp) chirp {
-	return chirp{
-		ID: c.ID,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.CreatedAt,
-		Body: c.Body,
-		User_id: c.UserID,
-	}
 }
 
 func cleanChirp(chirp string) string {
