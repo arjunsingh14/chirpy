@@ -2,20 +2,19 @@ package main
 
 import (
 	"database/sql"
-	"net/http"
-	"os"
-	"sync/atomic"
-
 	"github.com/arjunsingh14/chirpy/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
+	"net/http"
+	"os"
+	"sync/atomic"
 )
 
 type apiConfig struct {
 	fileServerHits atomic.Int32
-	db *database.Queries
-	platform string
+	db             *database.Queries
+	platform       string
 }
 
 func main() {
@@ -43,11 +42,11 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiConfig.handleGetChirp)
 	mux.HandleFunc("POST /api/chirps", apiConfig.handleCreateChirp)
 	mux.HandleFunc("POST /api/users", apiConfig.handleCreateUser)
-
+	mux.HandleFunc("POST /api/login", apiConfig.handleUserLogin)
 
 	server := &http.Server{
-		Handler: mux, 
-		Addr: ":" + port,
+		Handler: mux,
+		Addr:    ":" + port,
 	}
 
 	server.ListenAndServe()
