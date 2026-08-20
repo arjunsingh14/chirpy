@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-
 	"github.com/arjunsingh14/chirpy/internal/database"
 )
 
@@ -13,6 +12,7 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 500, err.Error())
 		return
 	}
+
 	respondWithJson(w, 200, buildChirps(chirps))
 	
 }

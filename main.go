@@ -14,13 +14,17 @@ import (
 type apiConfig struct {
 	fileServerHits atomic.Int32
 	db             *database.Queries
+	jwt_secret 	   string
 	platform       string
 }
 
 func main() {
 	godotenv.Load()
+
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	jwtSecret := os.Getenv("JWT_SECRET")
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("Couldn't connect to datbase: %s", err)
@@ -29,7 +33,7 @@ func main() {
 
 	filePathRoot := "."
 	port := "8080"
-	apiConfig := &apiConfig{db: dbQueries, platform: platform}
+	apiConfig := &apiConfig{db: dbQueries, platform: platform, jwt_secret: jwtSecret}
 
 	mux := http.NewServeMux()
 	mux.Handle("/app/", http.StripPrefix("/app/", apiConfig.middlewareMetricsInc(http.FileServer(http.Dir(filePathRoot)))))
