@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/arjunsingh14/chirpy/internal/auth"
+	"github.com/arjunsingh14/chirpy/internal/database"
 	"net/http"
 	"time"
 )
@@ -10,14 +11,15 @@ import (
 type loginParams struct {
 	Email            string `json:"email"`
 	Password         string `json:"password"`
-	ExpiresInSeconds int    `json:"expires_in_seconds"`
 }
+
+const accessExpiresIn = time.Hour
+const refreshExpiresIn = 60 * 24 * time.Hour
 
 func (cfg *apiConfig) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	reqParams := loginParams{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&reqParams)
-	setExpiration(&reqParams)
 	if err != nil {
 		respondWithError(w, 500, "Something went wrong")
 		return
@@ -41,20 +43,23 @@ func (cfg *apiConfig) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.jwt_secret, time.Duration(reqParams.ExpiresInSeconds)*time.Second)
+	token, err := auth.MakeJWT(user.ID, cfg.jwt_secret, accessExpiresIn)
 	if err != nil {
 		respondWithError(w, 500, "Couldn't create token")
+		return
+	}
+
+	refreshToken, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{UserID: user.ID, Token: token, ExpiresAt: time.Now().Add(refreshExpiresIn)})
+
+	if err != nil {
+		respondWithError(w, 500, "Couldn't create refresh token")
 		return
 	}
 
 	respondWithJson(w, 200, loginResponse{
 		userResponse: newUserResponse(user),
 		Token:        token,
+		RefreshToken: refreshToken.Token,
 	})
 }
 
-func setExpiration(params *loginParams) {
-	if params.ExpiresInSeconds > 3600 || params.ExpiresInSeconds == 0 {
-		params.ExpiresInSeconds = 3600
-	}
-}

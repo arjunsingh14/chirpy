@@ -17,6 +17,7 @@ type userResponse struct {
 type loginResponse struct {
 	userResponse
 	Token string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func newUserResponse(user database.User) userResponse {
